@@ -10,6 +10,7 @@ import (
 )
 
 type UserDetails struct {
+	ID        int8
 	FirstName string
 	LastName  string
 	Age       int
@@ -49,7 +50,7 @@ func main() {
 	fmt.Println("User Details after querying: ", user)
 
 	// ***************** SELECT Query to fetch all records ***********
-	rows, err := db.Query(ctx, "select first_name,last_name,age,city,email from user_details")
+	rows, err := db.Query(ctx, "select id,first_name,last_name,age,city,email from user_details")
 	if err != nil {
 		fmt.Println("Error querying the database: ", err)
 		return
@@ -58,7 +59,7 @@ func main() {
 	var users = make([]UserDetails, 0)
 	for rows.Next() {
 		var u UserDetails
-		err := rows.Scan(&u.FirstName, &u.LastName, &u.Age, &u.City, &u.Email)
+		err := rows.Scan(&u.ID, &u.FirstName, &u.LastName, &u.Age, &u.City, &u.Email)
 		if err != nil {
 			fmt.Println("Error scanning rows: ", err)
 			return
