@@ -26,23 +26,72 @@ func main() {
 		return
 	}
 	defer db.Close()
+
+	// ************** INSERT QUERY *******************
 	_, err = db.Exec(ctx,
 		"insert into user_details (first_name,last_name,age,city,email) values ($1,$2,$3,$4,$5)",
-		"Sourav", "Ganguly", 40, "Kolkata", "sourav@gmail.com",
+		"Hardik", "Pandya", 40, "Mumbai", "pandya@gmail.com",
 	)
 	if err != nil {
 		fmt.Println("Error querying the database: ", err)
 		return
 	}
 	fmt.Println("Data inserted successfully")
-	// var user UserDetails
-	// err = db.QueryRow(ctx, "select first_name,last_name,age,city,email from user_details where id=$1", 2).
-	// 	Scan(&user.FirstName, &user.LastName, &user.Age, &user.City, &user.Email)
-	// if err != nil {
-	// 	fmt.Println("Error querying the database: ", err)
-	// 	return
-	// }
-	// fmt.Println("User Details after querying: ", user)
+
+	// ************** SELECT Query with single record ***********
+	var user UserDetails
+	err = db.QueryRow(ctx, "select first_name,last_name,age,city,email from user_details where id=$1", 1).
+		Scan(&user.FirstName, &user.LastName, &user.Age, &user.City, &user.Email)
+	if err != nil {
+		fmt.Println("Error selecting one record from the database: ", err)
+		return
+	}
+	fmt.Println("User Details after querying: ", user)
+
+	// ***************** SELECT Query to fetch all records ***********
+	rows, err := db.Query(ctx, "select first_name,last_name,age,city,email from user_details")
+	if err != nil {
+		fmt.Println("Error querying the database: ", err)
+		return
+	}
+	defer rows.Close()
+	var users = make([]UserDetails, 0)
+	for rows.Next() {
+		var u UserDetails
+		err := rows.Scan(&u.FirstName, &u.LastName, &u.Age, &u.City, &u.Email)
+		if err != nil {
+			fmt.Println("Error scanning rows: ", err)
+			return
+		}
+		users = append(users, u)
+	}
+	fmt.Println("All users selected: ", users)
+
+	// *********** Update Query for updating User Details *********
+	commandTag, err := db.Exec(ctx,
+		"update user_details set first_name=$1, last_name=$2, age=$3, city=$4, email=$5 where id=$6",
+		"Sourav", "Ganguly", 42, "Kolkata", "sourav@gmail.com", 5)
+	if err != nil {
+		fmt.Println("Error updating the record: ", err)
+		return
+	}
+	if commandTag.RowsAffected() == 0 {
+		fmt.Println("No rows updated")
+		return
+	}
+	fmt.Println("Updated the record successfully ")
+
+	// ********** DELETE query **************
+	commandTag, err = db.Exec(ctx, "delete from user_details where id=1")
+	if err != nil {
+		fmt.Println("Error deleting the record: ", err)
+		return
+	}
+	if commandTag.RowsAffected() == 0 {
+		fmt.Println("No rows deleted")
+		return
+	}
+	fmt.Println("Record deleted successfully")
 }
 
 func DBConnection(ctx context.Context) (*pgxpool.Pool, error) {
